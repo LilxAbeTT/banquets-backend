@@ -1,0 +1,175 @@
+import React, { useState } from 'react';
+import { MapContainer, TileLayer, Marker } from 'react-leaflet';
+import L from 'leaflet';
+import { motion, AnimatePresence } from 'framer-motion';
+
+const iconoPersonalizado = new L.Icon({
+  iconUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon.png',
+  iconSize: [25, 41],
+  iconAnchor: [12, 41],
+});
+
+const PerfilDonador = () => {
+  const [formData, setFormData] = useState({
+    nombre: 'Vidanta',
+    correo: 'restaurante@vidanta.com',
+    telefono: '6241234567',
+    direccion: 'Calle Falsa 123, La Cabos, BCS',
+  });
+  const [mostrarModal, setMostrarModal] = useState(false);
+  const [nuevaPassword, setNuevaPassword] = useState('');
+  const [confirmarPassword, setConfirmarPassword] = useState('');
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    alert('Perfil actualizado con éxito');
+  };
+
+  const handleConfirmarCambio = () => {
+    if (nuevaPassword !== confirmarPassword) {
+      alert('Las contraseñas no coinciden');
+    } else {
+      alert('Contraseña actualizada');
+      setMostrarModal(false);
+      setNuevaPassword('');
+      setConfirmarPassword('');
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-gray-50 p-8 flex flex-col items-center relative">
+      
+      <button className="absolute top-4 right-6 text-gray-600 hover:text-black text-2xl" onClick={() => window.history.back()}>
+      ↩️ Inicio
+      </button>
+      <h1 className="text-3xl font-extrabold text-green-700 mb-6">Mi Perfil</h1>
+
+      <div className="bg-white p-8 rounded-2xl shadow-md w-full max-w-xl z-10">
+        
+        <div className="flex flex-col items-center mb-6">
+          
+          <img src="https://i.pravatar.cc/120" alt="Foto de perfil"
+            className="w-32 h-32 rounded-full shadow-md mb-2 object-cover" />
+          <button className="text-sm text-blue-500 hover:underline">Cambiar Foto</button>
+        </div>
+
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Nombre Donador</label>
+            <input
+              type="text"
+              name="nombre"
+              value={formData.nombre}
+              onChange={handleChange}
+              className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:ring-green-500 focus:border-green-500"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Correo electrónico</label>
+            <input
+              type="email"
+              name="correo"
+              value={formData.correo}
+              readOnly
+              className="mt-1 block w-full rounded-lg bg-gray-100 border-gray-300 shadow-sm cursor-not-allowed"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Teléfono</label>
+            <input
+              type="tel"
+              name="telefono"
+              value={formData.telefono}
+              onChange={handleChange}
+              className="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:ring-green-500 focus:border-green-500"
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700">Dirección</label>
+            <MapContainer center={[23.0505, -109.7005]} zoom={13} scrollWheelZoom={false} style={{ height: '200px' }} className="z-10">
+              <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+              <Marker position={[23.0505, -109.7005]} icon={iconoPersonalizado} />
+            </MapContainer>
+          </div>
+          <div className="pt-4">
+            <button
+              type="submit"
+              className="w-full bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 transition">
+              Actualizar Perfil
+            </button>
+          </div>
+        </form>
+
+        <div className="mt-6 text-center">
+          <button
+            onClick={() => setMostrarModal(true)}
+            className="text-sm text-blue-600 hover:underline"
+          >
+            Cambiar contraseña
+          </button>
+        </div>
+      </div>
+
+      <AnimatePresence>
+        {mostrarModal && (
+          <motion.div
+            className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          >
+            <motion.div
+              className="bg-white p-6 rounded-xl shadow-lg w-full max-w-sm relative"
+              initial={{ scale: 0.9 }}
+              animate={{ scale: 1 }}
+              exit={{ scale: 0.9 }}
+            >
+              <button
+                onClick={() => setMostrarModal(false)}
+                className="absolute top-2 right-2 text-gray-600 hover:text-black text-xl"
+              >
+                ✖
+              </button>
+              <h2 className="text-xl font-bold text-gray-800 mb-4">Cambiar Contraseña</h2>
+              <input
+                type="password"
+                placeholder="Nueva contraseña"
+                value={nuevaPassword}
+                onChange={(e) => setNuevaPassword(e.target.value)}
+                className="w-full mb-3 border px-3 py-2 rounded"
+              />
+              <input
+                type="password"
+                placeholder="Confirmar contraseña"
+                value={confirmarPassword}
+                onChange={(e) => setConfirmarPassword(e.target.value)}
+                className="w-full mb-4 border px-3 py-2 rounded"
+              />
+              <div className="flex justify-between">
+                <button
+                  onClick={handleConfirmarCambio}
+                  className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
+                >
+                  Confirmar
+                </button>
+                <button
+                  onClick={() => setMostrarModal(false)}
+                  className="bg-gray-300 px-4 py-2 rounded hover:bg-gray-400"
+                >
+                  Cancelar
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+};
+
+export default PerfilDonador;

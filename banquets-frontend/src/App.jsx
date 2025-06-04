@@ -5,7 +5,6 @@ import { Routes, Route } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import Login from './pages/auth/Login';
 import DashboardDonador from './pages/donador/DashboardDonador';
-import PublicarDonacion from './pages/donador/PublicarDonacion';
 import PerfilDonador from './pages/donador/PerfilDonador';
 import DashboardOrganizacion from './pages/organizacion/DashboardOrganizacion';
 import PerfilOrganizacion from './pages/organizacion/PerfilOrganizacion';
@@ -37,7 +36,6 @@ const App = () => {
               <Routes>
                 {/* Rutas protegidas para DONADOR */}
                 <Route path="/donador/dashboard" element={<ProtectedRoute allowedRoles={['DONADOR']}><DashboardDonador /></ProtectedRoute>} />
-                <Route path="/donador/publicar" element={<ProtectedRoute allowedRoles={['DONADOR']}><PublicarDonacion /></ProtectedRoute>} />
                 <Route path="/donador/perfil" element={<ProtectedRoute allowedRoles={['DONADOR']}><PerfilDonador /></ProtectedRoute>} />
 
                 {/* Rutas protegidas para ORGANIZACION */}

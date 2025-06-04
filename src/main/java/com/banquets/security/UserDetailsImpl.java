@@ -24,9 +24,9 @@ public class UserDetailsImpl implements UserDetails {
         this.active = user.getEstado().equalsIgnoreCase("activo");
     }
 
+    // En UserDetailsImpl.java
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        // 🔧 Uso correcto del objeto `usuario`
         return List.of(new SimpleGrantedAuthority("ROLE_" + usuario.getTipoUsuario().toUpperCase()));
     }
 

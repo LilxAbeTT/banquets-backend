@@ -1,4 +1,3 @@
-// src/main/java/com/banquets/controller/DonacionController.java
 package com.banquets.controller;
 
 import com.banquets.entity.Donacion;
@@ -6,6 +5,7 @@ import com.banquets.entity.Donador;
 import com.banquets.security.UserDetailsImpl;
 import com.banquets.service.DonacionService;
 import com.banquets.repository.DonadorRepository;
+import com.banquets.dto.DonacionResponseDTO; // <--- Importa el DTO
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -29,7 +29,7 @@ public class DonacionController {
     @Autowired
     private DonadorRepository donadorRepository;
 
-    // Crear donación (solo DONADOR)
+    // Crear donación (solo DONADOR) - Este método ya lo tienes y funciona con el frontend
     @PostMapping
     public ResponseEntity<Donacion> crearDonacion(
             Authentication auth,
@@ -76,29 +76,49 @@ public class DonacionController {
         return ResponseEntity.ok(donacionService.crearDonacion(donacion));
     }
 
-    // Listar donaciones propias (DONADOR)
+    // Listar donaciones propias (DONADOR) - Ahora devuelve DTOs
     @GetMapping("/mias")
-    public ResponseEntity<List<Donacion>> listarDonacionesPropias(Authentication auth) {
+    public ResponseEntity<List<DonacionResponseDTO>> listarDonacionesPropias(Authentication auth) {
         UserDetailsImpl userDetails = (UserDetailsImpl) auth.getPrincipal();
         Integer idDonador = userDetails.getId();
-        // Obtener donaciones que no estén 'recolectadas' para el muro
-        List<Donacion> lista = donacionService.obtenerDonacionesActivasPorDonador(idDonador);
+        // Llama al servicio que ahora devuelve DTOs
+        List<DonacionResponseDTO> lista = donacionService.obtenerPorDonadorYEstado(idDonador, "pendientes"); // Filtra por estado 'pendientes'
         return ResponseEntity.ok(lista);
     }
 
-    // Actualizar estado (por ejemplo, cuando Organización acepta)
+    // Endpoint para obtener todas las donaciones (útil para organización)
+    @GetMapping
+    public ResponseEntity<List<DonacionResponseDTO>> listarTodasLasDonaciones(@RequestParam(required = false) String estado) {
+        List<DonacionResponseDTO> lista;
+        if (estado != null && !estado.isEmpty()) {
+            lista = donacionService.obtenerPorEstado(estado);
+        } else {
+            // Si no se especifica estado, obtén todas las que sean públicas o relevantes
+            // Por ahora, solo las pendientes para el dashboard de organización
+            lista = donacionService.obtenerPorEstado("pendientes");
+        }
+        return ResponseEntity.ok(lista);
+    }
+
+
+    // Actualizar estado (por ejemplo, cuando Organización acepta) - Permanece igual, opera sobre la entidad Donacion
     @PutMapping("/{id}/estado")
     public ResponseEntity<Donacion> actualizarEstado(@PathVariable Integer id, @RequestParam String estado) {
         Donacion actualizada = donacionService.actualizarEstado(id, estado);
         return ResponseEntity.ok(actualizada);
     }
 
-    // NUEVO: Eliminar donación (solo DONADOR puede eliminar las suyas y si están pendientes)
+    // Endpoint para eliminar donación
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> eliminarDonacion(Authentication auth, @PathVariable Integer id) {
+    public ResponseEntity<Void> eliminarDonacion(@PathVariable Integer id, Authentication auth) {
         UserDetailsImpl userDetails = (UserDetailsImpl) auth.getPrincipal();
         Integer idDonador = userDetails.getId();
-        donacionService.eliminarDonacion(id, idDonador);
-        return ResponseEntity.noContent().build(); // Retorna 204 No Content en caso de éxito
+        // Opcional: Añadir validación para que solo el donador dueño o un admin pueda eliminar
+        // Donacion donacion = donacionService.obtenerDonacionPorId(id); // Necesitarías un método para obtener la Donacion entidad
+        // if (!donacion.getDonador().getIdDonador().equals(idDonador) && !userDetails.getTipoUsuario().equals("ADMIN")) {
+        //     return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        // }
+        donacionService.eliminarDonacion(id);
+        return ResponseEntity.noContent().build(); // 204 No Content para eliminación exitosa
     }
 }

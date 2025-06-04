@@ -6,20 +6,20 @@ import api from '../services/axios'; // Importa tu instancia de axios configurad
 export const AuthContext = createContext(null);
 
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null); // Almacena { token, id, tipoUsuario, nombre }
+  const [user, setUser] = useState(null); // Almacena { token, idUsuario, tipoUsuario, nombre }
   const [loading, setLoading] = useState(true); // Para manejar el estado de carga inicial
 
   // Efecto para cargar el usuario desde localStorage al inicio
   useEffect(() => {
     const storedToken = localStorage.getItem('token');
-    const storedUser = localStorage.getItem('usuario'); // Este ya es JSON.stringify
+    const storedUser = localStorage.getItem('usuario');
     if (storedToken && storedUser) {
       try {
         const parsedUser = JSON.parse(storedUser);
-        setUser({ ...parsedUser, token: storedToken });
+        // Asegurarse de que idUsuario esté presente aquí
+        setUser({ ...parsedUser, token: storedToken, idUsuario: parsedUser.idUsuario });
       } catch (e) {
         console.error("Error al parsear usuario desde localStorage", e);
-        // Si hay un error, limpiar el localStorage para evitar bucles
         localStorage.removeItem('token');
         localStorage.removeItem('usuario');
         setUser(null);
@@ -32,12 +32,14 @@ export const AuthProvider = ({ children }) => {
   const login = async (correo, contrasena) => {
     try {
       const res = await api.post('/auth/login', { correo, contrasena });
-      const { token, tipoUsuario, nombre } = res.data;
+      // Destructurar también idUsuario
+      const { token, tipoUsuario, nombre, idUsuario } = res.data; // <--- Destructurar idUsuario
 
-      const userData = { token, tipoUsuario, nombre };
+      // Guardar idUsuario en userData
+      const userData = { token, tipoUsuario, nombre, idUsuario }; // <--- Incluir idUsuario
       setUser(userData);
       localStorage.setItem('token', token);
-      localStorage.setItem('usuario', JSON.stringify({ tipoUsuario, nombre })); // No guardar el token en el objeto 'usuario' si ya está por separado
+      localStorage.setItem('usuario', JSON.stringify({ tipoUsuario, nombre, idUsuario })); // <--- Guardar idUsuario en localStorage
 
       return true; // Login exitoso
     } catch (error) {
@@ -45,7 +47,7 @@ export const AuthProvider = ({ children }) => {
       setUser(null);
       localStorage.removeItem('token');
       localStorage.removeItem('usuario');
-      throw error; // Propagar el error para que el componente de Login lo maneje
+      throw error;
     }
   };
 
@@ -54,7 +56,6 @@ export const AuthProvider = ({ children }) => {
     setUser(null);
     localStorage.removeItem('token');
     localStorage.removeItem('usuario');
-    // Si usas axios para la redirección, puedes limpiar headers aquí si lo necesitas
     delete api.defaults.headers.common['Authorization'];
     console.log("Sesión cerrada");
   };
@@ -63,7 +64,12 @@ export const AuthProvider = ({ children }) => {
   const updateUserContext = (newUserData) => {
     setUser(prevUser => {
       const updatedUser = { ...prevUser, ...newUserData };
-      localStorage.setItem('usuario', JSON.stringify({ tipoUsuario: updatedUser.tipoUsuario, nombre: updatedUser.nombre }));
+      // Asegúrate de que idUsuario se mantenga si se actualiza solo el nombre/telefono
+      localStorage.setItem('usuario', JSON.stringify({
+        tipoUsuario: updatedUser.tipoUsuario,
+        nombre: updatedUser.nombre,
+        idUsuario: updatedUser.idUsuario // <--- Asegurarse de que idUsuario se persista
+      }));
       return updatedUser;
     });
   };

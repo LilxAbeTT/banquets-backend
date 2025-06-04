@@ -6,7 +6,7 @@ import com.banquets.entity.Usuario;
 import com.banquets.repository.UsuarioRepository;
 import com.banquets.security.JwtUtil;
 import com.banquets.service.AuthService;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder; // Asegúrate de que esto sea PasswordEncoder
 import org.springframework.stereotype.Service;
 
 @Service
@@ -14,11 +14,11 @@ public class AuthServiceImpl implements AuthService {
 
     private final UsuarioRepository usuarioRepository;
     private final JwtUtil jwtUtil;
-    private final BCryptPasswordEncoder passwordEncoder;
+    private final PasswordEncoder passwordEncoder;
 
     public AuthServiceImpl(UsuarioRepository usuarioRepository,
                            JwtUtil jwtUtil,
-                           BCryptPasswordEncoder passwordEncoder) {
+                           PasswordEncoder passwordEncoder) {
         this.usuarioRepository = usuarioRepository;
         this.jwtUtil = jwtUtil;
         this.passwordEncoder = passwordEncoder;
@@ -35,6 +35,7 @@ public class AuthServiceImpl implements AuthService {
 
         String token = jwtUtil.generateToken(usuario.getCorreo(), usuario.getTipoUsuario());
 
-        return new LoginResponse(token, usuario.getTipoUsuario(), usuario.getNombre());
+        // Modificado para incluir el idUsuario
+        return new LoginResponse(token, usuario.getTipoUsuario(), usuario.getNombre(), usuario.getIdUsuario()); // <--- ¡Importante!
     }
 }

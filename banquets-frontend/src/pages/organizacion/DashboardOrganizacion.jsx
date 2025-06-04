@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, Polyline } from 'react-leaflet';
 import { motion, AnimatePresence } from 'framer-motion';
 import { FiCheckCircle, FiX, FiMessageSquare } from 'react-icons/fi';
 import { FaDog, FaUser } from 'react-icons/fa';
 import 'leaflet/dist/leaflet.css';
+import api from '../../services/axios';
 
 const DashboardOrganizacion = () => {
   const [modalAbierto, setModalAbierto] = useState(null);
@@ -20,8 +21,12 @@ const DashboardOrganizacion = () => {
   const [modalHistorial, setModalHistorial] = useState(null);
   const [filtroHistorial, setFiltroHistorial] = useState('');
 
+  // Simulación de ubicación de la organización.
+  // Esto debería cargarse de forma real del perfil del usuario.
   const ubicacionOrganizacion = { lat: 23.055513, lng: -109.700467 };
 
+  // --- DATOS SIMULADOS ---
+  // Estos datos serán reemplazados por llamadas al backend en futuros pasos.
   const donaciones = [
     {
       id: 1,
@@ -32,9 +37,9 @@ const DashboardOrganizacion = () => {
       donador: 'Vidanta Resort',
       imagen: 'https://www.alimentacionsindesperdicio.com/wp-content/uploads/2017/02/remenjammm-800x360.jpg',
       ubicacion: { lat: 23.047447, lng: -109.692861 },
-      estado: 'pendiente', // nuevo
-      descripcion: 'Ejemplo de descripción de alimentos...', // opcional, para mostrar en detalle
-      fechaLimite: '2025-05-12', // ficticio
+      estado: 'pendiente',
+      descripcion: 'Ejemplo de descripción de alimentos...',
+      fechaLimite: '2025-05-12',
       horaRecoleccion: null
     },
     {
@@ -56,9 +61,9 @@ const DashboardOrganizacion = () => {
       donador: 'Frutería La Paz',
       imagen: 'https://www.alimentacionsindesperdicio.com/wp-content/uploads/2017/02/remenjammm-800x360.jpg',
       ubicacion: { lat: 23.046000, lng: -109.693500 },
-      estado: 'pendiente', // nuevo
-      descripcion: 'Ejemplo de descripción de alimentos...', // opcional, para mostrar en detalle
-      fechaLimite: '2025-05-12', // ficticio
+      estado: 'pendiente',
+      descripcion: 'Ejemplo de descripción de alimentos...',
+      fechaLimite: '2025-05-12',
       horaRecoleccion: null
     }
   ];
@@ -89,6 +94,7 @@ const DashboardOrganizacion = () => {
       categoria: 'animal'
     }
   ];
+  // --- FIN DATOS SIMULADOS ---
 
 
   const calcularDistancia = (org, don) => {
@@ -132,7 +138,6 @@ const DashboardOrganizacion = () => {
     : '—';
 
 
-
   return (
     <div className="min-h-screen bg-gray-100 p-6">
       <h1 className="text-2xl font-bold mb-6 text-black">¡Bienvenida, Organización!</h1>
@@ -161,116 +166,121 @@ const DashboardOrganizacion = () => {
                 />
               </div>
 
-              {historial.map((h) => (
-                <div key={h.id} className="bg-white rounded shadow overflow-hidden relative">
-                  <img src={h.imagen} alt={h.titulo} className="h-36 w-full object-cover" />
-                  <div className="p-4 space-y-1">
-                    <h3 className="text-lg font-bold">{h.titulo}</h3>
-                    <p className="text-sm text-gray-500">Donador: {h.donador}</p>
-                    <p className="text-sm text-gray-500">Fecha: {h.fecha}</p>
-                    <p className="text-sm text-gray-500">Cantidad: {h.cantidad} porciones</p>
-                    <p className="text-sm text-yellow-600">
-                      Evaluación: {'★'.repeat(h.evaluacion)}{'☆'.repeat(5 - h.evaluacion)}
-                    </p>
+              {historialFiltrado.length === 0 ? (
+                <p className="col-span-full text-center text-gray-500">No hay recolecciones en tu historial que coincidan con la búsqueda.</p>
+              ) : (
+                historialFiltrado.map((h) => (
+                  <div key={h.id} className="bg-white rounded shadow overflow-hidden relative">
+                    <img src={h.imagen} alt={h.titulo} className="h-36 w-full object-cover" />
+                    <div className="p-4 space-y-1">
+                      <h3 className="text-lg font-bold">{h.titulo}</h3>
+                      <p className="text-sm text-gray-500">Donador: {h.donador}</p>
+                      <p className="text-sm text-gray-500">Fecha: {h.fecha}</p>
+                      <p className="text-sm text-gray-500">Cantidad: {h.cantidad} porciones</p>
+                      <p className="text-sm text-yellow-600">
+                        Evaluación: {'★'.repeat(h.evaluacion)}{'☆'.repeat(5 - h.evaluacion)}
+                      </p>
 
-                    {!h.comprobante ? (
-                      <div className="mt-3">
-                        <label className="block text-sm font-medium text-gray-700">Subir comprobante:</label>
-                        <input
-                          type="file"
-                          accept="image/*"
-                          onChange={(e) => {
-                            const archivo = e.target.files[0];
-                            if (archivo) {
-                              const url = URL.createObjectURL(archivo);
-                              h.comprobante = url;
-                              setMostrarHistorial(false);
-                              setTimeout(() => setMostrarHistorial(true), 50);
-                              alert('Comprobante subido correctamente');
-                            }
-                          }}
-                          className="mt-1 w-full text-sm"
-                        />
-                      </div>
-                    ) : (
-                      <div className="mt-3">
-                        <p className="text-sm text-gray-700 font-semibold">Comprobante de entrega:</p>
-                        <img
-                          src={h.comprobante}
-                          alt="Comprobante"
-                          className="mt-1 h-32 w-full object-cover rounded-md border"
-                        />
-                      </div>
-                    )}
-
-
-                    {!h.evaluado && (
-                      <div className="mt-2 flex gap-1">
-                        {[1, 2, 3, 4, 5].map((star) => (
-                          <button
-                            key={star}
-                            onClick={() => {
-                              h.evaluacion = star;
-                              h.evaluado = true;
-                              setMostrarHistorial(false); // refresca el componente
-                              setTimeout(() => setMostrarHistorial(true), 50);
-                              alert(`Has evaluado al donador con ${star} estrella(s)`);
+                      {!h.comprobante ? (
+                        <div className="mt-3">
+                          <label className="block text-sm font-medium text-gray-700">Subir comprobante:</label>
+                          <input
+                            type="file"
+                            accept="image/*"
+                            onChange={(e) => {
+                              const archivo = e.target.files[0];
+                              if (archivo) {
+                                const url = URL.createObjectURL(archivo);
+                                h.comprobante = url; // Esto no actualizará el estado de forma inmutable
+                                setMostrarHistorial(false); // Forzar re-render
+                                setTimeout(() => setMostrarHistorial(true), 50);
+                                alert('Comprobante subido correctamente');
+                              }
                             }}
-                            className="text-yellow-500 text-xl hover:scale-110"
-                          >
-                            ★
-                          </button>
-                        ))}
-                      </div>
-                    )}
+                            className="mt-1 w-full text-sm"
+                          />
+                        </div>
+                      ) : (
+                        <div className="mt-3">
+                          <p className="text-sm text-gray-700 font-semibold">Comprobante de entrega:</p>
+                          <img
+                            src={h.comprobante}
+                            alt="Comprobante"
+                            className="mt-1 h-32 w-full object-cover rounded-md border"
+                          />
+                        </div>
+                      )}
+
+
+                      {!h.evaluado && (
+                        <div className="mt-2 flex gap-1">
+                          {[1, 2, 3, 4, 5].map((star) => (
+                            <button
+                              key={star}
+                              onClick={() => {
+                                h.evaluacion = star; // Esto no actualizará el estado de forma inmutable
+                                h.evaluado = true; // Esto no actualizará el estado de forma inmutable
+                                setMostrarHistorial(false); // Forzar re-render
+                                setTimeout(() => setMostrarHistorial(true), 50);
+                                alert(`Has evaluado al donador con ${star} estrella(s)`);
+                              }}
+                              className="text-yellow-500 text-xl hover:scale-110"
+                            >
+                              ★
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                    <button
+                      onClick={() => setModalHistorial(h)}
+                      className="mt-3 w-full bg-blue-600 text-white py-1 rounded hover:bg-blue-700 transition text-sm"
+                    >
+                      Ver Detalles
+                    </button>
                   </div>
-                  <button
-                    onClick={() => setModalHistorial(h)}
-                    className="mt-3 w-full bg-blue-600 text-white py-1 rounded hover:bg-blue-700 transition text-sm"
-                  >
-                    Ver Detalles
-                  </button>
-                </div>
-              ))}
+                ))
+              )}
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
-              {donacionesFiltradas.map((d) => {
-                const distancia = calcularDistancia(ubicacionOrganizacion, d.ubicacion);
-                return (
-                  <div key={d.id} className="bg-white shadow rounded-xl overflow-hidden hover:shadow-lg transition">
-                    <img src={d.imagen} alt={d.titulo} className="w-full h-36 object-cover" />
-                    <div className="p-4 space-y-1">
-                      <div className="flex justify-between items-start">
-                        <h3 className="text-lg font-bold text-gray-800">{d.titulo}</h3>
-                        {d.categoria === 'animal' ? <FaDog className="text-orange-600" /> : <FaUser className="text-blue-700" />}
+              {donacionesFiltradas.length === 0 ? (
+                <p className="col-span-full text-center text-gray-500">No hay donaciones disponibles que coincidan con los filtros.</p>
+              ) : (
+                donacionesFiltradas.map((d) => {
+                  const distancia = calcularDistancia(ubicacionOrganizacion, d.ubicacion);
+                  return (
+                    <div key={d.id} className="bg-white shadow rounded-xl overflow-hidden hover:shadow-lg transition">
+                      <img src={d.imagen} alt={d.titulo} className="w-full h-36 object-cover" />
+                      <div className="p-4 space-y-1">
+                        <div className="flex justify-between items-start">
+                          <h3 className="text-lg font-bold text-gray-800">{d.titulo}</h3>
+                          {d.categoria === 'animal' ? <FaDog className="text-orange-600" /> : <FaUser className="text-blue-700" />}
+                        </div>
+                        <p className="text-sm text-gray-600">{d.tipo}</p>
+                        <p className="text-sm text-gray-600">Donador: <strong>{d.donador}</strong></p>
+                        <p className="text-sm text-gray-500">Cantidad: {d.cantidad} porciones</p>
+                        <p className="text-sm text-green-600">{distancia <= 5 ? '¡Cerca de ti!' : `A ${distancia} km de distancia`}</p>
+                        <button
+                          onClick={() => {
+                            setModalAbierto(d);
+                            setChatActivo(false);
+                          }}
+                          className="mt-4 w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 transition"
+                        >
+                          Ver Detalles y Aceptar
+                        </button>
                       </div>
-                      <p className="text-sm text-gray-600">{d.tipo}</p>
-                      <p className="text-sm text-gray-600">Donador: <strong>{d.donador}</strong></p>
-                      <p className="text-sm text-gray-500">Cantidad: {d.cantidad} porciones</p>
-                      <p className="text-sm text-green-600">{distancia <= 5 ? '¡Cerca de ti!' : `A ${distancia} km de distancia`}</p>
-                      <button
-                        onClick={() => {
-                          setModalAbierto(d); // Abre modal con datos completos
-                          setChatActivo(false); // Chat desactivado por ahora
-                        }}
-                        className="mt-4 w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 transition"
-                      >
-                        Ver Detalles y Aceptar
-                      </button>
-
-
                     </div>
-                  </div>
-                );
-              })}
+                  );
+                })
+              )}
             </div>
           )}
         </div>
 
         {/* Panel lateral derecho */}
         <div className="space-y-6">
-          {/* Estadísticas */}
           <div className="bg-white p-4 rounded-xl shadow text-sm text-gray-700 space-y-2">
             <h3 className="text-gray-800 font-bold mb-1">📈 Estadísticas</h3>
             <p>🧾 Donaciones disponibles: <strong>{totalDisponibles}</strong></p>
@@ -280,8 +290,6 @@ const DashboardOrganizacion = () => {
             <p>⭐ Evaluación promedio: <strong>{promedioEvaluacion}</strong> / 5</p>
           </div>
 
-
-          {/* Filtros */}
           {!mostrarHistorial && (
             <div className="bg-white p-4 rounded-xl shadow space-y-3">
               <h3 className="text-sm font-bold text-gray-800">Filtros avanzados</h3>
@@ -312,7 +320,6 @@ const DashboardOrganizacion = () => {
             </div>
           )}
 
-          {/* Contactar */}
           <div className="bg-white p-4 rounded-xl shadow text-sm text-gray-600">
             <h3 className="text-gray-800 font-semibold mb-2">¿Tienes un problema?</h3>
             <button onClick={() => alert('Redirigiendo a soporte...')} className="w-full bg-red-500 text-white px-3 py-2 rounded hover:bg-red-600 transition text-sm font-semibold">Contactar Administrador</button>
@@ -320,7 +327,6 @@ const DashboardOrganizacion = () => {
         </div>
       </div>
 
-      {/* Modal con mapa y chat */}
       <AnimatePresence>
         {modalAbierto && (
           <motion.div
@@ -366,7 +372,7 @@ const DashboardOrganizacion = () => {
               <p className="text-sm text-gray-700 mt-2">📄 <strong>Descripción:</strong> {modalAbierto.descripcion}</p>
               <p className="text-sm text-gray-700">📅 <strong>Recoger antes de:</strong> 12 horas desde aceptación</p>
 
-              
+
               <MapContainer center={ubicacionOrganizacion} zoom={14} scrollWheelZoom={false} className="h-64 rounded-lg z-10">
                 <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
                 <Marker position={ubicacionOrganizacion}><Popup>Organización</Popup></Marker>
@@ -374,52 +380,29 @@ const DashboardOrganizacion = () => {
                 <Polyline positions={[ubicacionOrganizacion, modalAbierto.ubicacion]} color="blue" />
               </MapContainer>
 
-              {/* Chat */}
               {chatActivo ? (
-                (() => {
-                  if (!modalAbierto) {
-                    return null; // aún no hay modal activo
-                  }
-
-                  if (modalAbierto.estado === 'en_proceso') {
-                    return chatActivo ? (
-                      <div className="mt-4 border p-4 rounded bg-gray-50 space-y-2">
-                        <h3 className="text-sm font-bold text-gray-700 mb-2">Chat con Donador</h3>
-                        <div className="max-h-40 overflow-y-auto space-y-1 text-sm">
-                          {mensajes.map((m, i) => (
-                            <div key={i} className={m.de === 'organizacion' ? 'text-right' : 'text-left'}>
-                              <span className={m.de === 'organizacion' ? 'bg-green-100' : 'bg-blue-100'} style={{ padding: '4px 8px', borderRadius: '6px', display: 'inline-block' }}>
-                                {m.texto}
-                              </span>
-                            </div>
-                          ))}
-                        </div>
-                        <div className="flex items-center mt-2 gap-2">
-                          <input
-                            type="text"
-                            value={mensaje}
-                            onChange={(e) => setMensaje(e.target.value)}
-                            placeholder="Escribe un mensaje..."
-                            className="flex-grow border px-3 py-1 rounded text-sm"
-                          />
-                          <button onClick={enviarMensaje} className="bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700">Enviar</button>
-                        </div>
+                <div className="mt-4 border p-4 rounded bg-gray-50 space-y-2">
+                  <h3 className="text-sm font-bold text-gray-700 mb-2">Chat con Donador</h3>
+                  <div className="max-h-40 overflow-y-auto space-y-1 text-sm">
+                    {mensajes.map((m, i) => (
+                      <div key={i} className={m.de === 'organizacion' ? 'text-right' : 'text-left'}>
+                        <span className={m.de === 'organizacion' ? 'bg-green-100' : 'bg-blue-100'} style={{ padding: '4px 8px', borderRadius: '6px', display: 'inline-block' }}>
+                          {m.texto}
+                        </span>
                       </div>
-                    ) : (
-                      <button onClick={() => setChatActivo(true)} className="mt-4 w-full px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
-                        Chatear con Donador
-                      </button>
-                    );
-                  }
-
-                  return (
-                    <div className="mt-4 flex items-center justify-center gap-2 text-gray-500 text-sm italic">
-                      <span className="text-lg">🔒</span>
-                      <span>El chat estará disponible después de aceptar esta donación.</span>
-                    </div>
-                  );
-                })()
-
+                    ))}
+                  </div>
+                  <div className="flex items-center mt-2 gap-2">
+                    <input
+                      type="text"
+                      value={mensaje}
+                      onChange={(e) => setMensaje(e.target.value)}
+                      placeholder="Escribe un mensaje..."
+                      className="flex-grow border px-3 py-1 rounded text-sm"
+                    />
+                    <button onClick={enviarMensaje} className="bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700">Enviar</button>
+                  </div>
+                </div>
               ) : (
                 <button onClick={() => setChatActivo(true)} className="mt-4 w-full px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
                   Chatear con Donador
@@ -430,7 +413,6 @@ const DashboardOrganizacion = () => {
         )}
       </AnimatePresence>
 
-      {/* Modal historial */}
       <AnimatePresence>
         {modalHistorial && (
           <motion.div
@@ -474,8 +456,6 @@ const DashboardOrganizacion = () => {
           </motion.div>
         )}
       </AnimatePresence>
-
-
     </div>
   );
 };

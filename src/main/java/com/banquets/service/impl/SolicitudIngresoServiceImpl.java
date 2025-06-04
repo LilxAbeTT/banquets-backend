@@ -12,6 +12,7 @@ import com.banquets.repository.UsuarioRepository;
 import com.banquets.service.CorreoService;
 import com.banquets.service.SolicitudIngresoService;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -24,7 +25,7 @@ public class SolicitudIngresoServiceImpl implements SolicitudIngresoService {
     private final UsuarioRepository usuarioRepository;
     private final DonadorRepository donadorRepository;
     private final OrganizacionRepository organizacionRepository;
-    private final BCryptPasswordEncoder passwordEncoder;
+    private final PasswordEncoder passwordEncoder; // <-- Usa la interfaz aquí
     private final CorreoService correoService;
 
     public SolicitudIngresoServiceImpl(
@@ -32,7 +33,7 @@ public class SolicitudIngresoServiceImpl implements SolicitudIngresoService {
             UsuarioRepository usuarioRepository,
             DonadorRepository donadorRepository,
             OrganizacionRepository organizacionRepository,
-            BCryptPasswordEncoder passwordEncoder, CorreoService correoService
+            PasswordEncoder passwordEncoder, CorreoService correoService // <-- Recibe la interfaz
     ) {
         this.solicitudIngresoRepository = solicitudIngresoRepository;
         this.usuarioRepository = usuarioRepository;

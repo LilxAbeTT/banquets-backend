@@ -1,6 +1,8 @@
+// src/pages/auth/Login.jsx
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import { useAuth } from '../../context/AuthContext'; // <--- Importa useAuth
+// import axios from 'axios'; // <--- Ya no se necesita importar axios directamente aquí
 
 const Login = () => {
   const [correo, setCorreo] = useState(localStorage.getItem('correoGuardado') || '');
@@ -9,6 +11,7 @@ const Login = () => {
   const [cargando, setCargando] = useState(false);
   const [error, setError] = useState('');
   const navigate = useNavigate();
+  const { login } = useAuth(); // <--- Usa el hook useAuth para acceder a la función login del contexto
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -22,16 +25,17 @@ const Login = () => {
     setCargando(true);
 
     try {
-      const res = await axios.post('http://localhost:8080/api/auth/login', {
-        correo,
-        contrasena: password
-      });
+      // Llama a la función login del contexto de autenticación
+      // Esta función ya se encarga de la petición a la API y de guardar el token/usuario en localStorage
+      await login(correo, password);
 
-      const { token, tipoUsuario, nombre } = res.data;
-
-      // Guarda en localStorage
-      localStorage.setItem('token', token);
-      localStorage.setItem('usuario', JSON.stringify({ correo, tipoUsuario, nombre }));
+      // El contexto de autenticación ya guarda el tipoUsuario y nombre,
+      // por lo que podemos acceder a ello directamente desde el user del contexto o
+      // asumir que el contexto ya redirigió si así lo quieres implementar.
+      // Para este caso, vamos a redirigir basándonos en el tipoUsuario que la función login del contexto retorna o guarda.
+      // Modificamos la función login del contexto para que devuelva los datos del usuario, o los extraemos del localStorage.
+      const userData = JSON.parse(localStorage.getItem('usuario')); // <--- Accede a los datos del usuario guardados por el contexto
+      const tipoUsuario = userData ? userData.tipoUsuario : null;
 
       if (recordarme) {
         localStorage.setItem('correoGuardado', correo);
@@ -40,18 +44,21 @@ const Login = () => {
       }
 
       // Redirigir según rol
-      if (tipoUsuario.toLowerCase() === 'admin') {
+      if (tipoUsuario && tipoUsuario.toLowerCase() === 'admin') {
         navigate('/admin/dashboard');
-      } else if (tipoUsuario.toLowerCase() === 'donador') {
+      } else if (tipoUsuario && tipoUsuario.toLowerCase() === 'donador') {
         navigate('/donador/dashboard');
-      } else if (tipoUsuario.toLowerCase() === 'organizacion') {
+      } else if (tipoUsuario && tipoUsuario.toLowerCase() === 'organizacion') {
         navigate('/organizacion/dashboard');
       } else {
-        setError('Rol de usuario no reconocido.');
+        setError('Rol de usuario no reconocido o faltante.');
+        // Considerar también llamar a logout() si el tipoUsuario no es válido
+        // logout();
       }
 
     } catch (err) {
       console.error(err);
+      // El error ya viene de la función login del contexto
       setError('Usuario o contraseña incorrectos.');
     } finally {
       setCargando(false);

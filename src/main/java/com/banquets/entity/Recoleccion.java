@@ -38,5 +38,53 @@ public class Recoleccion {
         this.idRecoleccion = idRecoleccion;
     }
 
+    public Donacion getDonacion() {
+        return donacion;
+    }
+
+    public void setDonacion(Donacion donacion) {
+        this.donacion = donacion;
+    }
+
+    public Organizacion getOrganizacion() {
+        return organizacion;
+    }
+
+    public void setOrganizacion(Organizacion organizacion) {
+        this.organizacion = organizacion;
+    }
+
+    public LocalDateTime getFechaAceptacion() {
+        return fechaAceptacion;
+    }
+
+    public void setFechaAceptacion(LocalDateTime fechaAceptacion) {
+        this.fechaAceptacion = fechaAceptacion;
+    }
+
+    public String getEstado() {
+        return estado;
+    }
+
+    public void setEstado(String estado) {
+        this.estado = estado;
+    }
+
+    public String getFirmaBase64() {
+        return firmaBase64;
+    }
+
+    public void setFirmaBase64(String firmaBase64) {
+        this.firmaBase64 = firmaBase64;
+    }
+
+    public String getComprobanteImagen() {
+        return comprobanteImagen;
+    }
+
+    public void setComprobanteImagen(String comprobanteImagen) {
+        this.comprobanteImagen = comprobanteImagen;
+    }
+
     // Getters y setters
 }

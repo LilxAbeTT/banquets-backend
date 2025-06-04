@@ -1,9 +1,11 @@
+// src/main/java/com/banquets/service/RecoleccionService.java
 package com.banquets.service;
 
 import com.banquets.entity.Recoleccion;
 import com.banquets.repository.RecoleccionRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
@@ -14,6 +16,7 @@ public class RecoleccionService {
     private RecoleccionRepository recoleccionRepository;
 
     public Recoleccion crearRecoleccion(Recoleccion recoleccion) {
+        // Aquí podrías añadir lógica para actualizar el estado de la Donacion a 'en_proceso'
         return recoleccionRepository.save(recoleccion);
     }
 
@@ -26,6 +29,7 @@ public class RecoleccionService {
     }
 
     public List<Recoleccion> obtenerPorDonador(Integer idDonador) {
+        // En este método obtendrás todas las recolecciones donde la donación fue hecha por ese donador
         return recoleccionRepository.findByDonacionDonadorIdDonador(idDonador);
     }
 
@@ -39,4 +43,14 @@ public class RecoleccionService {
         }
     }
 
+    // NUEVO: Método para confirmar recolección con firma
+    @Transactional
+    public Recoleccion confirmarRecoleccionConFirma(Integer idRecoleccion, String firmaBase64) {
+        Recoleccion recoleccion = recoleccionRepository.findById(idRecoleccion)
+                .orElseThrow(() -> new RuntimeException("Recolección no encontrada con ID: " + idRecoleccion));
+
+        recoleccion.setFirmaBase64(firmaBase64);
+        recoleccion.setEstado("confirmada"); // O el estado final que desees
+        return recoleccionRepository.save(recoleccion);
+    }
 }

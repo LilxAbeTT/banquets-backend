@@ -15,30 +15,43 @@ import ChatSoporte from './pages/ChatSoporte';
 import Bienvenida from './pages/landing/Bienvenida';
 import Registro from './pages/auth/Registro';
 import SaberMas from './pages/landing/SaberMas';
-import RecuperarPassword from './pages/auth/RecuperarPassword'; // ajusta según la ruta real
-
+import RecuperarPassword from './pages/auth/RecuperarPassword';
+import ProtectedRoute from './components/ProtectedRoute'; // <--- Importa ProtectedRoute
 
 const App = () => {
   return (
       <div className="min-h-screen bg-fondo text-texto">
         <Routes>
+          {/* Rutas públicas que no requieren autenticación */}
           <Route path="/" element={<Bienvenida />} />
+          <Route path="/login" element={<Login />} /> {/* Login también debe ser público */}
+          <Route path="/registro" element={<Registro />} />
+          <Route path="/saber-mas" element={<SaberMas />} />
+          <Route path="/recuperar-password" element={<RecuperarPassword />} />
+
+          {/* Grupo de rutas que siempre tendrán el Navbar */}
+          {/* Se usará un asterisco (*) para que todas las demás rutas intenten mostrar el Navbar */}
           <Route path="*" element={
             <>
               <Navbar />
               <Routes>
-                <Route path="/Login" element={<Login />} />
-                <Route path="/donador/dashboard" element={<DashboardDonador />} />
-                <Route path="/donador/publicar" element={<PublicarDonacion />} />
-                <Route path="/donador/perfil" element={<PerfilDonador />} />
-                <Route path="/organizacion/dashboard" element={<DashboardOrganizacion />} />
-                <Route path="/organizacion/perfil" element={<PerfilOrganizacion />} />
-                <Route path="/admin/dashboard" element={<DashboardAdmin />} />
-                <Route path="/soporte/chat" element={<ChatSoporte />} />
-                <Route path="/registro" element={<Registro />} />
+                {/* Rutas protegidas para DONADOR */}
+                <Route path="/donador/dashboard" element={<ProtectedRoute allowedRoles={['DONADOR']}><DashboardDonador /></ProtectedRoute>} />
+                <Route path="/donador/publicar" element={<ProtectedRoute allowedRoles={['DONADOR']}><PublicarDonacion /></ProtectedRoute>} />
+                <Route path="/donador/perfil" element={<ProtectedRoute allowedRoles={['DONADOR']}><PerfilDonador /></ProtectedRoute>} />
+
+                {/* Rutas protegidas para ORGANIZACION */}
+                <Route path="/organizacion/dashboard" element={<ProtectedRoute allowedRoles={['ORGANIZACION']}><DashboardOrganizacion /></ProtectedRoute>} />
+                <Route path="/organizacion/perfil" element={<ProtectedRoute allowedRoles={['ORGANIZACION']}><PerfilOrganizacion /></ProtectedRoute>} />
+
+                {/* Rutas protegidas para ADMIN */}
+                <Route path="/admin/dashboard" element={<ProtectedRoute allowedRoles={['ADMIN']}><DashboardAdmin /></ProtectedRoute>} />
+
+                {/* Rutas de soporte que pueden ser para usuarios logueados (todos los roles) */}
+                <Route path="/soporte/chat" element={<ProtectedRoute allowedRoles={['DONADOR', 'ORGANIZACION', 'ADMIN']}><ChatSoporte /></ProtectedRoute>} />
+
+                {/* Ruta 404 para cualquier otra ruta no definida dentro de este grupo */}
                 <Route path="*" element={<Error404 />} />
-                <Route path="/saber-mas" element={<SaberMas />} />
-                <Route path="/recuperar-password" element={<RecuperarPassword />} />
               </Routes>
             </>
           } />

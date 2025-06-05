@@ -4,13 +4,18 @@ public class LoginResponse {
     private String token;
     private String tipoUsuario;
     private String nombre;
-    private Integer idUsuario; // <--- Añadir este campo
+    private Integer idUsuario;
+    private Double latitud;
+    private Double longitud;
 
-    public LoginResponse(String token, String tipoUsuario, String nombre, Integer idUsuario) { // <--- Modificar constructor
+    // Constructor actualizado
+    public LoginResponse(String token, String tipoUsuario, String nombre, Integer idUsuario, Double latitud, Double longitud) {
         this.token = token;
         this.tipoUsuario = tipoUsuario;
         this.nombre = nombre;
-        this.idUsuario = idUsuario; // <--- Asignar
+        this.idUsuario = idUsuario;
+        this.latitud = latitud;
+        this.longitud = longitud;
     }
 
     // Getters
@@ -26,7 +31,15 @@ public class LoginResponse {
         return nombre;
     }
 
-    public Integer getIdUsuario() { // <--- Añadir getter
+    public Integer getIdUsuario() {
         return idUsuario;
+    }
+
+    public Double getLatitud() {
+        return latitud;
+    }
+
+    public Double getLongitud() {
+        return longitud;
     }
 }

@@ -8,6 +8,7 @@ import com.banquets.security.UserDetailsImpl;
 import com.banquets.service.EvaluacionService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
@@ -25,6 +26,7 @@ public class EvaluacionController {
 
     // Crear evaluación
     @PostMapping
+    @PreAuthorize("hasAnyRole('DONADOR', 'ORGANIZACION')")
     public ResponseEntity<Evaluacion> crearEvaluacion(
             Authentication auth, // Para obtener el ID del usuario que evalúa
             @RequestBody Evaluacion evaluacion) { // El frontend enviará un objeto Evaluacion
@@ -53,6 +55,7 @@ public class EvaluacionController {
 
     // Listar evaluaciones por usuario
     @GetMapping
+    @PreAuthorize("hasAnyRole('DONADOR', 'ORGANIZACION', 'ADMIN')")
     public ResponseEntity<List<Evaluacion>> listarEvaluaciones(Authentication auth) {
         UserDetailsImpl userDetails = (UserDetailsImpl) auth.getPrincipal();
         Integer idUsuario = userDetails.getId();

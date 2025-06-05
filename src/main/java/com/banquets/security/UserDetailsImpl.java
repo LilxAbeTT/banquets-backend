@@ -7,27 +7,35 @@ import org.springframework.security.core.userdetails.UserDetails;
 
 import java.util.Collection;
 import java.util.List;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class UserDetailsImpl implements UserDetails {
 
-    private final Usuario usuario; // 🔧 Aquí se guarda el usuario
+    private static final Logger logger = LoggerFactory.getLogger(UserDetailsImpl.class);
+
+    private final Usuario usuario;
     private final Integer id;
     private final String username;
     private final String password;
-    private final boolean active;
+    private final boolean active; 
 
     public UserDetailsImpl(Usuario user) {
-        this.usuario = user; // 🔧 Asignar usuario al atributo
+        this.usuario = user;
         this.id = user.getIdUsuario();
         this.username = user.getCorreo();
         this.password = user.getContrasena();
-        this.active = user.getEstado().equalsIgnoreCase("activo");
+        this.active = user.getEstado() != null ? user.getEstado() : false;
+
+
+        logger.info("UserDetailsImpl creado para usuario: {}, Tipo: {}, Activo: {}", user.getCorreo(), user.getTipoUsuario(), this.active);
     }
 
-    // En UserDetailsImpl.java
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
-        return List.of(new SimpleGrantedAuthority("ROLE_" + usuario.getTipoUsuario().toUpperCase()));
+        String roleString = usuario.getTipoUsuario() != null ? "ROLE_" + usuario.getTipoUsuario().toUpperCase() : "ROLE_UNKNOWN";
+        logger.info("Asignando autoridad: {}", roleString);
+        return List.of(new SimpleGrantedAuthority(roleString));
     }
 
     @Override
@@ -57,7 +65,7 @@ public class UserDetailsImpl implements UserDetails {
 
     @Override
     public boolean isEnabled() {
-        return active;
+        return active; // Devolverá true si el estado es true (activo)
     }
 
     public Integer getId() {

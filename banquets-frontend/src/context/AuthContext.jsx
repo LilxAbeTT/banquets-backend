@@ -6,20 +6,28 @@ import api from '../services/axios'; // Importa tu instancia de axios configurad
 export const AuthContext = createContext(null);
 
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null); // Almacena { token, idUsuario, tipoUsuario, nombre }
-  const [loading, setLoading] = useState(true); // Para manejar el estado de carga inicial
+  // Almacena { token, idUsuario, tipoUsuario, nombre, latitud, longitud }
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
 
   // Efecto para cargar el usuario desde localStorage al inicio
   useEffect(() => {
     const storedToken = localStorage.getItem('token');
-    const storedUser = localStorage.getItem('usuario');
+    const storedUser = localStorage.getItem('usuario'); // Este ya es JSON.stringify
     if (storedToken && storedUser) {
       try {
         const parsedUser = JSON.parse(storedUser);
-        // Asegurarse de que idUsuario esté presente aquí
-        setUser({ ...parsedUser, token: storedToken, idUsuario: parsedUser.idUsuario });
+        // Asegurarse de que idUsuario, latitud y longitud estén presentes aquí
+        setUser({
+          ...parsedUser,
+          token: storedToken,
+          idUsuario: parsedUser.idUsuario,
+          latitud: parsedUser.latitud,   // <--- Incluir latitud
+          longitud: parsedUser.longitud  // <--- Incluir longitud
+        });
       } catch (e) {
         console.error("Error al parsear usuario desde localStorage", e);
+        // Si hay un error, limpiar el localStorage para evitar bucles
         localStorage.removeItem('token');
         localStorage.removeItem('usuario');
         setUser(null);
@@ -32,14 +40,14 @@ export const AuthProvider = ({ children }) => {
   const login = async (correo, contrasena) => {
     try {
       const res = await api.post('/auth/login', { correo, contrasena });
-      // Destructurar también idUsuario
-      const { token, tipoUsuario, nombre, idUsuario } = res.data; // <--- Destructurar idUsuario
+      // Destructurar idUsuario, latitud y longitud
+      const { token, tipoUsuario, nombre, idUsuario, latitud, longitud } = res.data;
 
-      // Guardar idUsuario en userData
-      const userData = { token, tipoUsuario, nombre, idUsuario }; // <--- Incluir idUsuario
+      // Guardar toda la información relevante en userData
+      const userData = { token, tipoUsuario, nombre, idUsuario, latitud, longitud };
       setUser(userData);
       localStorage.setItem('token', token);
-      localStorage.setItem('usuario', JSON.stringify({ tipoUsuario, nombre, idUsuario })); // <--- Guardar idUsuario en localStorage
+      localStorage.setItem('usuario', JSON.stringify({ tipoUsuario, nombre, idUsuario, latitud, longitud }));
 
       return true; // Login exitoso
     } catch (error) {
@@ -64,11 +72,13 @@ export const AuthProvider = ({ children }) => {
   const updateUserContext = (newUserData) => {
     setUser(prevUser => {
       const updatedUser = { ...prevUser, ...newUserData };
-      // Asegúrate de que idUsuario se mantenga si se actualiza solo el nombre/telefono
+      // Asegurarse de que toda la información relevante se persista
       localStorage.setItem('usuario', JSON.stringify({
         tipoUsuario: updatedUser.tipoUsuario,
         nombre: updatedUser.nombre,
-        idUsuario: updatedUser.idUsuario // <--- Asegurarse de que idUsuario se persista
+        idUsuario: updatedUser.idUsuario,
+        latitud: updatedUser.latitud,
+        longitud: updatedUser.longitud
       }));
       return updatedUser;
     });

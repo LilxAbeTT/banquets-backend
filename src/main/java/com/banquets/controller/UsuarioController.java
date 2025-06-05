@@ -8,6 +8,8 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.security.Principal;
+import org.springframework.security.access.prepost.PreAuthorize; // <--- AÑADIR ESTA LÍNEA
+import java.security.Principal; // <--- Asegúrate de tener esta importación
 
 @RestController
 @RequestMapping("/api/usuarios")
@@ -18,6 +20,7 @@ public class UsuarioController {
 
     // Obtener datos propios del usuario logueado
     @GetMapping("/me")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Usuario> obtenerDatosPropios(Principal principal) {
         return usuarioService.buscarPorCorreo(principal.getName())
                 .map(ResponseEntity::ok)
@@ -26,6 +29,7 @@ public class UsuarioController {
 
     // Actualizar datos propios
     @PutMapping("/me")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<Usuario> actualizarDatos(Principal principal, @RequestBody Usuario datos) {
         return usuarioService.buscarPorCorreo(principal.getName())
                 .map(usuario -> {
@@ -37,6 +41,7 @@ public class UsuarioController {
 
     // Cambiar contraseña
     @PutMapping("/me/password")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<String> cambiarContrasena(Principal principal, @RequestBody String nuevaContrasena) {
         return usuarioService.buscarPorCorreo(principal.getName())
                 .map(usuario -> {

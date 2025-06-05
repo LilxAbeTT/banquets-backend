@@ -1,4 +1,3 @@
-// Recoleccion.java
 package com.banquets.entity;
 
 import jakarta.persistence.*;
@@ -22,13 +21,13 @@ public class Recoleccion {
     private LocalDateTime fechaAceptacion = LocalDateTime.now();
 
     @Column(length = 20)
-    private String estado = "aceptada"; // 'aceptada', 'confirmada'
+    private String estado = "aceptada"; // 'aceptada', 'confirmada', 'cancelada'
 
-    @Lob
+    @Lob // Para almacenar la firma como String Base64 directamente
     private String firmaBase64;
 
-    @Lob
-    private String comprobanteImagen;
+    @Lob // PARA ALMACENAR LA IMAGEN BINARIA DESDE DB (VARBINARY(MAX))
+    private byte[] comprobanteImagen; // <--- CAMBIO AQUÍ: de String a byte[]
 
     public Integer getIdRecoleccion() {
         return idRecoleccion;
@@ -78,13 +77,12 @@ public class Recoleccion {
         this.firmaBase64 = firmaBase64;
     }
 
-    public String getComprobanteImagen() {
+    // GETTER Y SETTER PARA EL NUEVO TIPO DE DATO DE COMPROBANTEIMAGEN
+    public byte[] getComprobanteImagen() { // <--- CAMBIO AQUÍ
         return comprobanteImagen;
     }
 
-    public void setComprobanteImagen(String comprobanteImagen) {
+    public void setComprobanteImagen(byte[] comprobanteImagen) { // <--- CAMBIO AQUÍ
         this.comprobanteImagen = comprobanteImagen;
     }
-
-    // Getters y setters
 }

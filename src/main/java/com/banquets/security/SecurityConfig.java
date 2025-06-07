@@ -46,30 +46,34 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
-                .csrf(csrf -> csrf.disable()) // Deshabilita CSRF para APIs REST
-                .cors(cors -> cors.configurationSource(corsConfigurationSource())) // <--- Usa tu bean CORS
-
+                .csrf(csrf -> csrf.disable())
+                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .authorizeHttpRequests(authorize -> authorize
-                        // Permite acceso público a estas rutas y sus métodos OPTIONS
+                        // Accesos públicos (login y registro)
                         .requestMatchers(HttpMethod.POST, "/api/auth/login").permitAll()
-                        .requestMatchers(HttpMethod.OPTIONS, "/api/auth/login").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/solicitudes/registro").permitAll()
+                        .requestMatchers(HttpMethod.OPTIONS, "/api/auth/login").permitAll()
                         .requestMatchers(HttpMethod.OPTIONS, "/api/solicitudes/registro").permitAll()
+
+                        // Páginas públicas frontend
                         .requestMatchers(HttpMethod.GET, "/saber-mas", "/recuperar-password", "/").permitAll()
                         .requestMatchers(HttpMethod.OPTIONS, "/saber-mas", "/recuperar-password", "/").permitAll()
-                        // Si hay otras rutas públicas GET que necesites, agrégalas aquí.
 
-                        // Todas las demás rutas requieren autenticación
+                        // Rutas API para recuperación de contraseña
+                        .requestMatchers(HttpMethod.POST, "/api/usuarios/recuperar-contrasena").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/usuarios/restablecer-contrasena").permitAll()
+
+                        // TODO: Agrega otras rutas públicas si las tienes aquí
+
+                        // Todo lo demás requiere autenticación
                         .anyRequest().authenticated()
                 )
-                .sessionManagement(session -> session
-                        .sessionCreationPolicy(SessionCreationPolicy.STATELESS) // Sesión sin estado (para JWT)
-                )
-                // Añade tu filtro JWT antes del filtro de autenticación de usuario/contraseña
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();
     }
+
 
     @Bean
     public DaoAuthenticationProvider authenticationProvider() {

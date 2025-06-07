@@ -1,5 +1,8 @@
 package com.banquets.controller;
 
+import com.banquets.dto.CancelarDonacionDTO;
+import com.banquets.dto.EditarDonacionDTO;
+import com.banquets.dto.ImagenDonacionDTO;
 import com.banquets.entity.Donacion;
 import com.banquets.entity.Donador;
 import com.banquets.security.UserDetailsImpl;
@@ -135,4 +138,37 @@ public class DonacionController {
 
         return ResponseEntity.noContent().build();
     }
+
+    @PutMapping("/editar")
+    public ResponseEntity<?> editarDonacion(@RequestBody EditarDonacionDTO dto) {
+        try {
+            donacionService.actualizarDonacion(dto);
+            return ResponseEntity.ok("Donación actualizada correctamente.");
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Error: " + e.getMessage());
+        }
+    }
+
+    @PutMapping("/cancelar")
+    public ResponseEntity<?> cancelarDonacion(@RequestBody CancelarDonacionDTO dto) {
+        try {
+            donacionService.cancelarDonacion(dto.getIdDonacion());
+            return ResponseEntity.ok("Donación cancelada.");
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Error: " + e.getMessage());
+        }
+    }
+
+    @PutMapping("/subir-imagen")
+    @PreAuthorize("hasRole('DONADOR')")
+    public ResponseEntity<?> subirImagenDonacion(@RequestBody ImagenDonacionDTO dto) {
+        try {
+            donacionService.subirImagenDonacion(dto);
+            return ResponseEntity.ok("Imagen subida correctamente.");
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body("Error: " + e.getMessage());
+        }
+    }
+
+
 }

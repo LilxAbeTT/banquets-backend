@@ -16,6 +16,9 @@ import Registro from './pages/auth/Registro';
 import SaberMas from './pages/landing/SaberMas';
 import RecuperarPassword from './pages/auth/RecuperarPassword';
 import ProtectedRoute from './components/ProtectedRoute'; // <--- Importa ProtectedRoute
+import CambiarContrasena from './components/perfil/CambiarContrasena';
+import RecuperarContrasena from './components/auth/RecuperarContrasena';
+import RestablecerContrasena from './components/auth/RestablecerContrasena';
 
 const App = () => {
   return (
@@ -34,6 +37,11 @@ const App = () => {
             <>
               <Navbar />
               <Routes>
+                {/* Rutas protegidas para TODOS */}
+                <Route path="/perfil/cambiar-contrasena" element={<CambiarContrasena />} />
+                <Route path="/recuperar-contrasena" element={<RecuperarContrasena />} />
+                <Route path="/restablecer-contrasena" element={<RestablecerContrasena />} />
+
                 {/* Rutas protegidas para DONADOR */}
                 <Route path="/donador/dashboard" element={<ProtectedRoute allowedRoles={['DONADOR']}><DashboardDonador /></ProtectedRoute>} />
                 <Route path="/donador/perfil" element={<ProtectedRoute allowedRoles={['DONADOR']}><PerfilDonador /></ProtectedRoute>} />

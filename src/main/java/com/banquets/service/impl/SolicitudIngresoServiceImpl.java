@@ -9,8 +9,11 @@ import com.banquets.repository.DonadorRepository;
 import com.banquets.repository.OrganizacionRepository;
 import com.banquets.repository.SolicitudIngresoRepository;
 import com.banquets.repository.UsuarioRepository;
+import com.banquets.service.BitacoraService;
 import com.banquets.service.CorreoService;
 import com.banquets.service.SolicitudIngresoService;
+import jakarta.mail.MessagingException;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -27,6 +30,8 @@ public class SolicitudIngresoServiceImpl implements SolicitudIngresoService {
     private final OrganizacionRepository organizacionRepository;
     private final PasswordEncoder passwordEncoder; // <-- Usa la interfaz aquí
     private final CorreoService correoService;
+    @Autowired
+    private BitacoraService bitacoraService;
 
     public SolicitudIngresoServiceImpl(
             SolicitudIngresoRepository solicitudIngresoRepository,
@@ -75,17 +80,15 @@ public class SolicitudIngresoServiceImpl implements SolicitudIngresoService {
     }
 
     @Override
-    public SolicitudIngreso aprobar(Integer idSolicitud) {
+    public SolicitudIngreso aprobar(Integer idSolicitud, String ip, String agente) throws MessagingException {
         SolicitudIngreso solicitud = solicitudIngresoRepository.findById(idSolicitud)
                 .orElseThrow(() -> new RuntimeException("Solicitud no encontrada"));
 
         solicitud.setEstado("aprobado");
 
-        // Generar contraseña aleatoria segura
         String contrasenaGenerada = generarContrasenaAleatoria();
         String contrasenaCifrada = passwordEncoder.encode(contrasenaGenerada);
 
-        // Crear usuario
         Usuario nuevo = new Usuario();
         nuevo.setNombre(solicitud.getNombre());
         nuevo.setCorreo(solicitud.getCorreo());
@@ -94,9 +97,14 @@ public class SolicitudIngresoServiceImpl implements SolicitudIngresoService {
         nuevo.setContrasena(contrasenaCifrada);
 
         Usuario usuarioGuardado = usuarioRepository.save(nuevo);
-        correoService.enviarCredenciales(solicitud.getCorreo(), contrasenaGenerada);
 
-        // Crear rol específico
+        correoService.enviarCorreoAprobacion(
+                solicitud.getCorreo(),
+                solicitud.getNombre(),
+                solicitud.getTipoUsuario(),
+                contrasenaGenerada
+        );
+
         if ("DONADOR".equalsIgnoreCase(solicitud.getTipoUsuario())) {
             Donador donador = new Donador();
             donador.setIdDonador(usuarioGuardado.getIdUsuario());
@@ -113,20 +121,45 @@ public class SolicitudIngresoServiceImpl implements SolicitudIngresoService {
             organizacionRepository.save(org);
         }
 
-        // Aquí luego se llamará al servicio de envío de correo
-        // enviarCorreoCredenciales(solicitud.getCorreo(), contrasenaGenerada);
+        // Bitácora
+        bitacoraService.registrarEvento(
+                usuarioGuardado.getIdUsuario(),
+                "APROBACION",
+                "SolicitudIngreso",
+                solicitud.getIdSolicitud(),
+                "El administrador aprobó la solicitud y se creó el usuario",
+                ip, agente
+        );
 
         return solicitudIngresoRepository.save(solicitud);
     }
 
     @Override
-    public SolicitudIngreso rechazar(Integer idSolicitud) {
+    public SolicitudIngreso rechazar(Integer idSolicitud, String motivo, String ip, String agente) throws MessagingException {
         SolicitudIngreso solicitud = solicitudIngresoRepository.findById(idSolicitud)
                 .orElseThrow(() -> new RuntimeException("Solicitud no encontrada"));
 
         solicitud.setEstado("rechazado");
+
+        correoService.enviarCorreoRechazo(
+                solicitud.getCorreo(),
+                solicitud.getNombre(),
+                solicitud.getTipoUsuario(),
+                motivo
+        );
+
+        bitacoraService.registrarEvento(
+                null,
+                "RECHAZO",
+                "SolicitudIngreso",
+                solicitud.getIdSolicitud(),
+                "El administrador rechazó la solicitud: " + motivo,
+                ip, agente
+        );
+
         return solicitudIngresoRepository.save(solicitud);
     }
+
 
     private String generarContrasenaAleatoria() {
         String caracteres = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789@$#";

@@ -1,9 +1,12 @@
 package com.banquets.controller;
 
+import com.banquets.dto.RechazoDTO;
 import com.banquets.dto.SolicitudIngresoDTO;
 import com.banquets.entity.SolicitudIngreso;
 import com.banquets.repository.SolicitudIngresoRepository;
 import com.banquets.service.SolicitudIngresoService;
+import jakarta.mail.MessagingException;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize; // <--- AÑADIR ESTA LÍNEA
 import org.springframework.web.bind.annotation.*;
@@ -45,18 +48,35 @@ public class SolicitudIngresoController {
         return ResponseEntity.ok(lista);
     }
 
-    // Aprobar solicitud (ADMIN) - Si estos métodos están aquí después de la consolidación
     @PutMapping("/aprobar/{id}")
-    @PreAuthorize("hasRole('ADMIN')") // <--- AÑADIR ESTA LÍNEA
-    public SolicitudIngreso aprobar(@PathVariable Integer id) {
-        return solicitudIngresoService.aprobar(id);
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<?> aprobar(@PathVariable Integer id, HttpServletRequest request) {
+        try {
+            SolicitudIngreso solicitud = solicitudIngresoService.aprobar(
+                    id,
+                    request.getRemoteAddr(),
+                    request.getHeader("User-Agent")
+            );
+            return ResponseEntity.ok(solicitud);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body("Error: " + e.getMessage());
+        }
     }
 
-    // Rechazar solicitud (ADMIN) - Si estos métodos están aquí después de la consolidación
-    @PutMapping("/rechazar/{id}")
-    @PreAuthorize("hasRole('ADMIN')") // <--- AÑADIR ESTA LÍNEA
-    public SolicitudIngreso rechazar(@PathVariable Integer id) {
-        return solicitudIngresoService.rechazar(id);
+    @PutMapping("/rechazar")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<?> rechazar(@RequestBody RechazoDTO dto, HttpServletRequest request) {
+        try {
+            SolicitudIngreso solicitud = solicitudIngresoService.rechazar(
+                    dto.getIdSolicitud(),
+                    dto.getMotivo(),
+                    request.getRemoteAddr(),
+                    request.getHeader("User-Agent")
+            );
+            return ResponseEntity.ok(solicitud);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body("Error: " + e.getMessage());
+        }
     }
 
     // Contar solicitudes pendientes (ADMIN)

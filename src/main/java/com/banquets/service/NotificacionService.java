@@ -1,23 +1,31 @@
 package com.banquets.service;
 
-import com.banquets.entity.Notificacion;
-import com.banquets.repository.NotificacionRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Map;
 
 @Service
 public class NotificacionService {
 
     @Autowired
-    private NotificacionRepository notificacionRepository;
+    private JdbcTemplate jdbcTemplate;
 
-    public Notificacion crearNotificacion(Notificacion notificacion) {
-        return notificacionRepository.save(notificacion);
+    public List<Map<String, Object>> obtenerNotificacionesPorUsuario(Integer idUsuario) {
+        String sql = "SELECT * FROM V_NOTIFICACIONES_USUARIO WHERE id_usuario = ? ORDER BY fecha DESC";
+        return jdbcTemplate.queryForList(sql, idUsuario);
     }
 
-    public List<Notificacion> obtenerPorUsuario(Integer idUsuario) {
-        return notificacionRepository.findByUsuarioIdUsuarioOrderByFechaDesc(idUsuario);
+    public void marcarComoLeida(Integer idNotificacion) {
+        jdbcTemplate.update("UPDATE Notificacion SET leida = 1 WHERE id_notificacion = ?", idNotificacion);
+    }
+
+    public void crearNotificacion(Integer idUsuario, String mensaje) {
+        jdbcTemplate.update("""
+            INSERT INTO Notificacion (id_usuario, mensaje)
+            VALUES (?, ?)
+        """, idUsuario, mensaje);
     }
 }

@@ -1,5 +1,7 @@
 package com.banquets.service;
 
+import com.banquets.dto.EditarDonacionDTO;
+import com.banquets.dto.ImagenDonacionDTO;
 import com.banquets.entity.Donacion;
 import com.banquets.repository.DonacionRepository;
 import com.banquets.dto.DonacionResponseDTO;
@@ -7,6 +9,7 @@ import com.banquets.entity.view.DonacionDetalleView;
 import com.banquets.repository.view.DonacionDetalleViewRepository;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -23,7 +26,8 @@ public class DonacionService {
 
     @Autowired
     private DonacionDetalleViewRepository donacionDetalleViewRepository;
-
+    @Autowired
+    private JdbcTemplate jdbcTemplate;
     // Método para crear una donación y devolverla como DTO completamente cargado
     @Transactional // <--- Asegura que la transacción esté activa para las relaciones
     public DonacionResponseDTO crearDonacionAndReturnDTO(Donacion donacion) {
@@ -119,4 +123,31 @@ public class DonacionService {
                 view.getDonadorTelefono()
         );
     }
+
+    public void actualizarDonacion(EditarDonacionDTO dto) {
+        jdbcTemplate.update("EXEC sp_actualizar_donacion ?,?,?,?,?,?,?,?,?,?",
+                dto.getIdDonacion(),
+                dto.getTitulo(),
+                dto.getDescripcion(),
+                dto.getTipo(),
+                dto.getCategoria(),
+                dto.getCantidad(),
+                dto.getFechaLimite(),
+                dto.getEstadoComida(),
+                dto.getEmpacado(),
+                dto.getLatitud(),
+                dto.getLongitud()
+        );
+    }
+
+    public void cancelarDonacion(Integer idDonacion) {
+        jdbcTemplate.update("EXEC sp_cancelar_donacion ?", idDonacion);
+    }
+
+    public void subirImagenDonacion(ImagenDonacionDTO dto) {
+        byte[] binario = java.util.Base64.getDecoder().decode(dto.getImagenBase64());
+        jdbcTemplate.update("EXEC sp_subir_imagen_donacion ?, ?", dto.getIdDonacion(), binario);
+    }
+
+
 }

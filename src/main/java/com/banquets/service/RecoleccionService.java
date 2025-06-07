@@ -1,5 +1,6 @@
 package com.banquets.service;
 
+import com.banquets.dto.ConfirmarEntregaDTO;
 import com.banquets.entity.Donacion; // <--- Importar Donacion
 import com.banquets.entity.Organizacion; // <--- Importar Organizacion
 import com.banquets.entity.Recoleccion;
@@ -11,6 +12,7 @@ import com.banquets.entity.view.RecoleccionDetalleView;
 import com.banquets.repository.view.RecoleccionDetalleViewRepository;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -34,7 +36,8 @@ public class RecoleccionService {
 
     @Autowired
     private OrganizacionRepository organizacionRepository; // <--- Inyectar OrganizacionRepository
-
+    @Autowired
+    private JdbcTemplate jdbcTemplate;
     // Modificado: Este método debería recibir IDs y crear la Recoleccion y actualizar Donacion
     @Transactional
     public Recoleccion crearRecoleccionYActualizarDonacion(Integer idDonacion, Integer idOrganizacion, LocalDateTime fechaEstimadaRecoleccion) { // <--- Nuevos parámetros
@@ -142,4 +145,17 @@ public class RecoleccionService {
         recoleccion.setComprobanteImagen(comprobanteImagen);
         return recoleccionRepository.save(recoleccion);
     }
+
+    public void confirmarEntrega(ConfirmarEntregaDTO dto) {
+        byte[] comprobanteBytes = null;
+        if (dto.getComprobanteBase64() != null && !dto.getComprobanteBase64().isEmpty()) {
+            comprobanteBytes = java.util.Base64.getDecoder().decode(dto.getComprobanteBase64());
+        }
+
+        jdbcTemplate.update("EXEC sp_confirmar_entrega_donacion ?, ?, ?",
+                dto.getIdRecoleccion(),
+                dto.getFirmaBase64(),
+                comprobanteBytes);
+    }
+
 }

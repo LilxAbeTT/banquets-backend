@@ -1,5 +1,6 @@
 package com.banquets.controller;
 
+import com.banquets.dto.ConfirmarEntregaDTO;
 import com.banquets.entity.Recoleccion;
 import com.banquets.security.UserDetailsImpl;
 import com.banquets.service.RecoleccionService;
@@ -129,4 +130,15 @@ public class RecoleccionController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
         }
     }
+
+    @PutMapping("/confirmar-entrega")
+    public ResponseEntity<?> confirmarEntrega(@RequestBody ConfirmarEntregaDTO dto) {
+        try {
+            recoleccionService.confirmarEntrega(dto);
+            return ResponseEntity.ok("Entrega confirmada exitosamente.");
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Error: " + e.getMessage());
+        }
+    }
+
 }

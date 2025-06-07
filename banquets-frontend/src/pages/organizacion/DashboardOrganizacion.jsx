@@ -7,9 +7,7 @@ import 'leaflet/dist/leaflet.css';
 import api from '../../services/axios';
 import { useAuth } from '../../context/AuthContext';
 
-// --- AÑADIR ESTAS IMPORTACIONES PARA RECHARTS ---
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from 'recharts';
-// --- FIN IMPORTACIONES RECHARTS ---
 
 const DashboardOrganizacion = () => {
   const { user } = useAuth();
@@ -311,7 +309,7 @@ const DashboardOrganizacion = () => {
                               <p className="text-sm text-gray-500">Donador: <strong>{h.donador?.nombreEmpresa || 'Donador Desconocido'}</strong></p>
                               <p className="text-sm text-gray-500">Fecha Aceptación: {new Date(h.fechaAceptacion).toLocaleDateString()}</p>
                               <p className="text-sm font-medium" style={{ color: h.recoleccionEstado === 'confirmada' ? '#22c55e' : (h.recoleccionEstado === 'aceptada' ? '#3b82f6' : '#ef4444') }}>
-                                  Estado: {h.recoleccionEstado.replace('_', ' ').toUpperCase()}
+                                  Estado: {h.recoleccionEstado?.replace('_', ' ').toUpperCase()}
                               </p>
 
                               {/* Sección de comprobante e evaluación */}

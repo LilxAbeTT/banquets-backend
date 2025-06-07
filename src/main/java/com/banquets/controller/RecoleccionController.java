@@ -3,23 +3,23 @@ package com.banquets.controller;
 import com.banquets.entity.Recoleccion;
 import com.banquets.security.UserDetailsImpl;
 import com.banquets.service.RecoleccionService;
-import com.banquets.dto.DonacionResponseDTO.RecoleccionDTO; // Importa el DTO de recolección
-import com.banquets.dto.AceptarDonacionRequestDTO; // <--- Importa el nuevo DTO
+import com.banquets.dto.DonacionResponseDTO.RecoleccionDTO;
+import com.banquets.dto.AceptarDonacionRequestDTO;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority; // Importar
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
-import org.slf4j.Logger; // <--- Importar Logger
-import org.slf4j.LoggerFactory; // <--- Importar LoggerFactory
-import org.springframework.security.core.GrantedAuthority; // <--- AÑADIR ESTA LÍNEA
-
+import org.slf4j.Logger; // Importar Logger
+import org.slf4j.LoggerFactory; // Importar LoggerFactory
 
 import java.io.IOException;
 import java.util.List;
+import java.util.stream.Collectors; // Importar
 
 @RestController
 @RequestMapping("/api/recolecciones")
@@ -33,9 +33,9 @@ public class RecoleccionController {
     // Crear recolección (aceptar donación)
     @PostMapping
     @PreAuthorize("hasAuthority('ROLE_ORGANIZACION')")
-    public ResponseEntity<Recoleccion> crearRecoleccion( // <--- Se mantiene Recoleccion en el retorno por ahora
-                                                         @RequestBody AceptarDonacionRequestDTO request, // <--- Recibe el DTO de solicitud
-                                                         Authentication auth // Para obtener el ID de la organización
+    public ResponseEntity<?> crearRecoleccion( // <--- Retorno cambiado a ResponseEntity<?>
+                                               @RequestBody AceptarDonacionRequestDTO request,
+                                               Authentication auth
     ) {
         try {
             UserDetailsImpl userDetails = (UserDetailsImpl) auth.getPrincipal();
@@ -44,15 +44,22 @@ public class RecoleccionController {
             Recoleccion creada = recoleccionService.crearRecoleccionYActualizarDonacion(
                     request.getIdDonacion(),
                     idOrganizacion,
-                    request.getFechaEstimadaRecoleccion() // Puede ser null si no se especifica
+                    request.getFechaEstimadaRecoleccion() // Puede ser null
             );
-            return ResponseEntity.ok(creada);
+            logger.info("Recolección creada exitosamente para donación {}. Estado: {}", request.getIdDonacion(), creada.getEstado());
+            // Si la recolección contiene relaciones LAZY, devolver un DTO.
+            // Para simplicidad, podemos devolver un objeto con los IDs confirmados.
+            // O un DTO cargado si recoleccionService.crearRecoleccionYActualizarDonacion devuelve un DTO.
+            return ResponseEntity.ok("Donación aceptada y recolección creada."); // <--- Devolver un mensaje simple de éxito
+            // Alternativa: Si RecoleccionService devolviera RecoleccionDTO, se devolvería el DTO aquí.
+            // return ResponseEntity.ok(new RecoleccionDTO(creada)); // Si RecoleccionDTO tiene constructor de Entidad
         } catch (RuntimeException e) {
-            logger.error("Error al aceptar donación: {}", e.getMessage());
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null); // O un DTO de error con el mensaje
+            logger.error("Error de negocio al aceptar donación: {}", e.getMessage(), e);
+            // Devuelve 400 Bad Request con el mensaje de la excepción
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(e.getMessage());
         } catch (Exception e) {
-            logger.error("Error inesperado al aceptar donación: {}", e.getMessage(), e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
+            logger.error("Error inesperado al crear recolección: {}", e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error interno del servidor.");
         }
     }
 
@@ -67,9 +74,9 @@ public class RecoleccionController {
         return ResponseEntity.ok(lista);
     }
 
-    // Listar recolecciones de donaciones de un donador específico (para su historial) - Podría ser redundante con el GET general
+    // Listar recolecciones de donaciones de un donador específico (para su historial)
     @GetMapping("/donador/{idDonador}")
-    @PreAuthorize("hasAuthority('ROLE_DONADOR') or hasAuthority('ROLE_ADMIN')")
+    @PreAuthorize("hasAnyAuthority('ROLE_DONADOR', 'ROLE_ADMIN')")
     public ResponseEntity<List<RecoleccionDTO>> listarRecoleccionesPorDonador(
             @PathVariable Integer idDonador,
             Authentication auth) {
@@ -84,10 +91,10 @@ public class RecoleccionController {
     // Endpoint para confirmar entrega de una recolección y subir la firma
     @PutMapping("/{idRecoleccion}/confirmar")
     @PreAuthorize("hasAuthority('ROLE_DONADOR')")
-    public ResponseEntity<Recoleccion> confirmarEntrega(
-            @PathVariable Integer idRecoleccion,
-            @RequestBody String firmaBase64,
-            Authentication auth
+    public ResponseEntity<Recoleccion> confirmarEntrega( // Se mantiene retorno de entidad si no da LazyInit
+                                                         @PathVariable Integer idRecoleccion,
+                                                         @RequestBody String firmaBase64,
+                                                         Authentication auth
     ) {
         UserDetailsImpl userDetails = (UserDetailsImpl) auth.getPrincipal();
         Integer idDonadorAutenticado = userDetails.getId();
@@ -100,10 +107,10 @@ public class RecoleccionController {
     // Endpoint para subir comprobante de imagen (para Organizacion)
     @PutMapping("/{idRecoleccion}/subirComprobante")
     @PreAuthorize("hasAuthority('ROLE_ORGANIZACION')")
-    public ResponseEntity<Recoleccion> subirComprobante(
-            @PathVariable Integer idRecoleccion,
-            @RequestParam("comprobante") MultipartFile comprobanteFile,
-            Authentication auth
+    public ResponseEntity<Recoleccion> subirComprobante( // Se mantiene retorno de entidad si no da LazyInit
+                                                         @PathVariable Integer idRecoleccion,
+                                                         @RequestParam("comprobante") MultipartFile comprobanteFile,
+                                                         Authentication auth
     ) {
         UserDetailsImpl userDetails = (UserDetailsImpl) auth.getPrincipal();
         Integer idOrganizacionAutenticada = userDetails.getId();
@@ -112,7 +119,13 @@ public class RecoleccionController {
             Recoleccion actualizada = recoleccionService.subirComprobante(idRecoleccion, comprobanteFile.getBytes(), idOrganizacionAutenticada);
             return ResponseEntity.ok(actualizada);
         } catch (IOException e) {
-            e.printStackTrace();
+            logger.error("Error al procesar imagen para comprobante: {}", e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
+        } catch (RuntimeException e) { // Capturar errores de negocio del servicio
+            logger.error("Error de negocio al subir comprobante: {}", e.getMessage(), e);
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(null); // O un DTO de error
+        } catch (Exception e) {
+            logger.error("Error inesperado al subir comprobante: {}", e.getMessage(), e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(null);
         }
     }
